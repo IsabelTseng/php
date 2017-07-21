@@ -1,3 +1,6 @@
+<?php
+    session_start();
+?>
 <!DOCTYPE html>
 <html lang="zh-Hant">
     <head>
@@ -24,17 +27,24 @@
                     <a class="navbar-brand" href="#"><span class="glyphicon glyphicon-heart" aria-hiden="true"></span> PHP project</a>
                 </div>
                 <div id="navbar" class="navbar-collapse collapse text-right">
-                    <a href="#" class="btn btn-success">Sign In</a>
+                    <?php if(!$_SESSION['identity']): ?>
+                        <a href="openid/authcontrol.php?act=login" class="btn btn-success">Sign In</a>
+                    <?php else: ?>
+                        <a href="signout.php" class="btn btn-warning">Sign Out</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </nav>
         <div class="jumbotron">
             <div class="container">
-                <h1>OWO//</h1>
+                <h1><?php if(isset($_SESSION['identity'])) echo $_SESSION['name']; ?>隨筆系統</h1>
             </div>
         </div>
         <div class="container">
             <div class="row">
+            <?php if(isset($_SESSION['identity'])):?>
+                <a href="add.php" class = "btn btn-primary btn-sm">新增</a>
+            <?php endif;?>
                 <table class="table table-striped table-hover">
                     <thead>
                         <tr>
@@ -45,12 +55,33 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
+                        <?php
+                        //讀取資料庫
+                            $mysqli = new mysqli('localhost','root','','crud');
+                            if ($mysqli->connect_errno) {
+                                echo "Failed to connect to MySQL: " . $mysqli->connect_error;
+                            }
+                            $mysqli->set_charset("utf8");
+                            $sql = "SELECT * FROM todo";
+                            $result = $mysqli->query($sql);
+                            while($row = $result->fetch_array()) {
+                                ?>
+                                    <tr>
+                                        <td><?=$row['id']?></td>
+                                        <td><?=$row['title']?></td>
+                                        <td><?=$row['fixtime']?></td>
+                                        <td>
+                                            <a href="content.php?id=<?=$row['id']?>">查詢</a>
+                                            <?php if(isset($_SESSION['identity'])) : ?>
+                                                <a href="update.php?id=<?=$row['id']?>">修改</a>
+                                                <a href="delete.php?id=<?=$row['id']?>" onclick="return confirm('您確認要刪除該筆資料嗎?');">刪除</a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php
+                            }
+                        ?>
+                        
                     </tbody>
                     
                 </table>
